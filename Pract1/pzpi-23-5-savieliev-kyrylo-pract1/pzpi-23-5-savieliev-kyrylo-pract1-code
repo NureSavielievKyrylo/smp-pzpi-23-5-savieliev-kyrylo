@@ -1,0 +1,104 @@
+#!/bin/bash
+
+if [[ "$#" -ne 2 ]]; then
+    echo " Некоректна кількість аргументів" >&2
+    exit 1
+fi
+
+height=$1
+width=$2
+
+if [[ -z "$height" || -z "$width" || $height -le 0 || $width -le 0 ]]; then
+    echo "Обидва аргументи мають бути додатними числами" >&2
+    exit 1
+fi
+
+min_width=7
+min_height=8
+
+if [[ $width -lt $min_width ]]; then
+    echo "Довжина шару снігу має бути не менше 7" >&2
+    exit 1
+fi
+
+if [[ $height -lt $min_height ]]; then
+    echo "Висота ялинки має бути не менше 8" >&2
+    exit 1
+fi
+
+if [[ $width -gt $height ]]; then
+    echo "Ширина не має бути більша за висоту" >&2
+    exit 1
+fi
+
+if [[ $((width % 2)) -eq 0 ]]; then
+    width=$((width - 1))
+fi
+
+if [[ $((height - width)) -gt 2 ]]; then
+    echo "Неможливо роздрукувати ялинку з такими параметрами" >&2
+    exit 1
+fi
+
+if [[ $height -eq $width ]]; then
+    echo "Неможливо роздрукувати ялинку з такими параметрами" >&2
+    exit 1
+fi
+
+if [[ $((height - width)) -eq 2 ]]; then
+    height=$((height - 1))
+fi
+
+print_row() {
+    local row_width=$1
+    local symbol=$2
+    local spaces=$(( (width - row_width) / 2 ))
+
+    for ((i = 0; i < spaces; i++)); do
+        echo -n " "
+    done
+
+    for ((i = 0; i < row_width; i++)); do
+        echo -n "$symbol"
+    done
+
+    echo
+}
+
+branch_width=$((width - 2))
+
+tiers_height=$((height - 3))
+
+tier1_height=$((tiers_height / 2))
+tier2_height=$((tiers_height - tier1_height))
+count=1
+
+for tier in 2 1; do
+    if [[ $tier -eq 2 ]]; then
+        height=$tier2_height
+        row_width=1
+    else
+        height=$tier1_height
+        row_width=3
+    fi
+
+    while [[ $height -ne 0 ]]; do
+        symbol=$( [[ $((count % 2)) -eq 1 ]] && echo "*" || echo "#" )
+        print_row $row_width "$symbol"
+
+        count=$((count + 1))
+        row_width=$((row_width + 2))
+        height=$((height - 1))
+    done
+done
+
+trunk_current_height=0
+
+until [ $trunk_current_height -eq 2 ]; do
+    print_row 3 "#"
+    trunk_current_height=$((trunk_current_height + 1))
+done
+
+print_row $width "*"
+
+# EOF
