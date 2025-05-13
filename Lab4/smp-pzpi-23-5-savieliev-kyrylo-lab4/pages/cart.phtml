@@ -1,0 +1,79 @@
+<?php
+require_once "./services/CartService.php";
+
+$cartService = new CartService();
+
+$cartItems = $cartService->getCartItems();
+$total = $cartService->calculateTotal();
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["id"])) {
+  $cartService->removeItem($_POST["id"]);
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["reset-cart"])) {
+  $cartService->clearCart();
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Корзина | Інтернет-магазин "Весна"</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="flex flex-col w-full h-dvh mt-auto">
+	<?php include "./templates/navbar.phtml"; ?>
+	<main class="flex flex-col h-full w-fit mx-auto items-center justify-center gap-4">
+    <?php if (empty($cartItems)) : ?>
+        <a href="/products" class="text-lg font-semibold text-indigo-500 underline decoration-2">Перейти до покупок</a>
+    <?php else : ?>
+        <h1 class="scroll-m-20 text-2xl font-semibold tracking-tight mx-auto">Корзина</h1>
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+            <tr>
+              <th scope="col" class="px-6 py-3">Назва</th>
+              <th scope="col" class="px-6 py-3">Ціна</th>
+              <th scope="col" class="px-6 py-3">Кількість</th>
+              <th scope="col" class="px-6 py-3">Сума</th>
+              <th scope="col" class="px-6 py-3">Дії</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($cartItems as $item) : ?>
+              <tr class="bg-white border-b border-gray-200">
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"><?= $item['name'] ?></th>
+                <th class="px-6 py-4"><?= $item['price'] ?></th>
+                <th class="px-6 py-4"><?= $item['quantity'] ?></th>
+                <th class="px-6 py-4"><?= $item['total'] ?></th>
+                <th class="px-6 py-4">
+                  <form action="" method="post">
+                    <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                    <button class="flex items-center justify-center size-9 rounded-lg text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2m-6 5v6m4-6v6"/></svg>
+                    </button>
+                  </form>
+                </th>
+              </tr>
+            <?php endforeach; ?>
+            <tr class="bg-white border-b border-gray-200">
+              <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Всього:</th>
+              <th class="px-6 py-4"></th>
+              <th class="px-6 py-4"></th>
+              <th class="px-6 py-4"><?= $total ?></th>
+              <th class="px-6 py-4"></th>
+            </tr>
+          </tbody>
+        </table>
+        <form class="w-full text-right space-x-2" action="" method="post">
+          <input type="hidden" name="reset-cart">
+          <button class="bg-red-500 text-white h-9 px-3 min-w-[128px] rounded-lg text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Відмінити</button>
+          <button class="bg-indigo-500 text-white h-9 px-3 min-w-[128px] rounded-lg text-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Купити</button>
+        </form>
+    <?php endif; ?>
+	</main>
+	<?php include "./templates/footer.phtml"; ?>
+</body>
+</html>
