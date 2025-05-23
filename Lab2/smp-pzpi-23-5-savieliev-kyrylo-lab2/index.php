@@ -35,7 +35,7 @@ class GoodsCatalog {
 		return array_find($this->goods, fn($good) => $good["name"] == $name);
 	}
 
-	public function loadGoods(): array {
+	private function loadGoods(): array {
 		$jsonString=file_get_contents("./data/goods.json");
 
 		return json_decode($jsonString, true);
