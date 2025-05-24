@@ -16,7 +16,8 @@ function prettifyGoodName(string $name): string {
 	return $name;
 }
 
-class GoodsCatalog {
+class GoodsCatalog {	
+	private static string $PATH = "./data/goods.json"
 	private array $goods;
 
 	public function __construct() {
@@ -36,7 +37,7 @@ class GoodsCatalog {
 	}
 
 	private function loadGoods(): array {
-		$jsonString=file_get_contents("./data/goods.json");
+		$jsonString=file_get_contents(GoodsCatalog::$PATH);
 
 		return json_decode($jsonString, true);
 	}
@@ -54,7 +55,7 @@ class Cart {
 	}
 
 	public function addItem(string $name, int $quantity): void {
-		if ($quantity < 0) {
+		if ($quantity < 0 || $quantity >= 100) {
 			return;
 		}
 
