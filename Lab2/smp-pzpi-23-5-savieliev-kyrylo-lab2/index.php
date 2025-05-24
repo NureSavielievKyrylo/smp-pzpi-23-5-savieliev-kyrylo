@@ -17,7 +17,7 @@ function prettifyGoodName(string $name): string {
 }
 
 class GoodsCatalog {	
-	private static string $PATH = "./data/goods.json"
+	private static string $PATH = "./data/goods.json";
 	private array $goods;
 
 	public function __construct() {
