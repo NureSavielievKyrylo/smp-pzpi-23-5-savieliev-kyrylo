@@ -6,17 +6,16 @@ class AuthService
 {
 	public static function login(string $username, string $password): void
 	{
-		$_SESSION['username'] = $username;
-		$_SESSION['authorized_at'] = time();
-
 		global $credentials;
 
-		$credentials = [
-			'username' => $username,
-			'password' => $password,
-		];
+		if ($credentials["username"] == $username && $credentials["password"] == $password) {
+			$_SESSION['username'] = $username;
+			$_SESSION['authorized_at'] = time();
 
-		header("Location: " . "/");
+			header("Location: " . "/");
+		} else {
+			throw new Exception("Імʼя користувача або пароль некоректні");
+		}
 	}
 
 	public static function logout(): void
@@ -26,8 +25,6 @@ class AuthService
 
 		unset($_SESSION['username']);
 		unset($_SESSION['authorized_at']);
-		unset($credentials);
-		unset($profile);
 
 		header("Location: " . "/");
 	}

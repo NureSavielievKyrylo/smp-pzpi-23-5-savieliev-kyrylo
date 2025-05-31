@@ -29,6 +29,6 @@ class UploadService
 
 		global $profile;
 
-		$profile['avatar'] = $targetFile;
+		$_SESSION['avatar_path'] = $targetFile;
 	}
 }

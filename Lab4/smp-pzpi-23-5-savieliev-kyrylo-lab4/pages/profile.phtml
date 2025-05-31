@@ -1,6 +1,7 @@
 <?php
 require_once 'services/UsersService.php';
 require_once 'services/UploadService.php';
+require_once 'services/AuthService.php';
 include 'stores/profile.php';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['first_name'])) {
@@ -17,6 +18,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['avatar'])) {
 	} catch (Exception $e) {
 		$error = $e->getMessage();
 	}
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['logout_action'])) {
+	AuthService::logout();
 }
 ?>
 <!doctype html>
@@ -35,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['avatar'])) {
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
 
 			<div class="flex flex-col items-center space-y-4">
-        <img src="<?= $profile['avatar'] ?? 'assets/fallback-image.jpg' ?>" alt="avatar" class="w-48 h-48 rounded-2xl">
+        <img src="<?= $_SESSION['avatar_path'] ?? $profile['avatar']; ?>" alt="avatar" class="w-48 h-48 rounded-2xl">
         <form id="upload_form" method="post" enctype="multipart/form-data">
           <input id="upload" type="file" name="avatar" accept="image/*" required hidden />
           <label for="upload" class="flex bg-white items-center items-center leading-none text-black h-9 px-3 min-w-[128px] rounded-lg text-sm border border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -54,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['avatar'])) {
 							type="text"
 							placeholder="Введіть імʼя"
 							class="bg-gray-50 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-indigo-500 focus:ring focus:ring-indigo-500 block w-full p-2.5"
-							value="<?= $profile['first_name'] ?? '' ?>"
+							value="<?= $_SESSION['user']['first_name'] ?? $profile['first_name'] ?>"
 							autofocus
 							required
 						/>
@@ -67,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['avatar'])) {
 							type="text"
 							placeholder="Введіть прізвище"
 							class="bg-gray-50 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-indigo-500 focus:ring focus:ring-indigo-500 block w-full p-2.5"
-							value="<?= $profile['last_name'] ?? '' ?>"
+							value="<?=  $_SESSION['user']['last_name'] ?? $profile['last_name'] ?>"
 							required
 						/>
 					</div>
@@ -79,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['avatar'])) {
 							type="date"
 							placeholder="Введіть імʼя"
 							class="bg-gray-50 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-indigo-500 focus:ring focus:ring-indigo-500 block w-full p-2.5"
-							value="<?= $profile['date_of_birth'] ?? '' ?>"
+							value="<?= $_SESSION['user']['date_of_birth'] ?? $profile['date_of_birth'] ?>"
 							required
 						/>
 					</div>
@@ -89,18 +94,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['avatar'])) {
 					<label for="description" class="block text-sm font-semibold mb-1">Опис</label>
 					<input
 						id="description"
-						name="description"
+						name="bio"
 						class="bg-gray-50 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-indigo-500 focus:ring focus:ring-indigo-500 block w-full p-2.5"
 						placeholder="Напишіть щось про себе..."
-						value="<?= $profile['description'] ?? '' ?>"
+						value="<?= $_SESSION['user']['bio'] ?? $profile['bio'] ?>"
 					>
 				</div>
 
 				<?php if (!empty($error)) : ?>
 					<p class="text-red-500"><?= htmlspecialchars($error) ?></p>
 				<?php endif ?>
-				<div class="flex justify-end">
-					<button class="bg-indigo-500 text-white h-9 px-3 min-w-[128px] rounded-lg text-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ml-auto">
+				<div class="flex justify-end gap-3">
+					<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+						<button name="logout_action" class="bg-red-600 text-white h-9 px-3 min-w-[128px] rounded-lg text-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ml-auto">
+							Вийти
+						</button>
+          </form>
+					<button class="bg-indigo-500 text-white h-9 px-3 min-w-[128px] rounded-lg text-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
 						Зберегти
 					</button>
 				</div>

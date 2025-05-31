@@ -14,7 +14,7 @@ class UsersService
 			throw new Exception('Поле з прізвищем не заповнено');
 		}
 
-		if (strlen(trim($data['description'])) == 0) {
+		if (strlen(trim($data['bio'])) == 0) {
 			throw new Exception('Поле з прізвищем не заповнено');
 		}
 
@@ -24,7 +24,12 @@ class UsersService
 
 		global $profile;
 
-		$profile = $data;
+		$_SESSION['user'] = [
+			'first_name' => $data['first_name'],
+			'last_name' => $data['last_name'],
+			'date_of_birth' => $data['date_of_birth'],
+			'bio' => $data['bio'],
+		];
 	}
 
 	private static function calculateAge(string $date): int {

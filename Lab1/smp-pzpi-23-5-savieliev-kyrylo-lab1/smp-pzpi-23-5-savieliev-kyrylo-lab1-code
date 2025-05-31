@@ -1,0 +1,156 @@
+#!/bin/bash
+
+VERSION="1.0.0"
+
+print_help() {
+    echo "Usage: $(basename "$0") [--help | --version] | [[-q|--quiet] [academic_group] file_from_cist.csv]"
+    echo ""
+    echo "Options:"
+    echo "  --help        Show this help message"
+    echo "  --version     Show version information"
+    echo "  -q, --quiet   Suppress output to standard output"
+    echo ""
+    echo "Parameters:"
+    echo "  academic_group  Academic group name (optional)"
+    echo "  file_from_cist  Input CSV file from CIST (optional)"
+    echo ""
+    echo "If academic group or input file is not specified, the script will prompt for selection"
+}
+
+print_version() {
+    echo "v$VERSION"
+}
+
+quiet=false
+csv_path=""
+group_input=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help)
+            print_help
+            exit 0
+            ;;
+        --version)
+            print_version
+            exit 0
+            ;;
+        -q|--quiet)
+            quiet=true
+            shift
+            ;;
+        *)
+            if [[ -z "$group_input" ]]; then
+                group_input="$1"
+            elif [[ -z "$csv_path" ]]; then
+                csv_path="$1"
+            else
+                echo "⛔ Too many args."
+                print_help
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [[ -z "$csv_path" ]]; then
+    PS3="🔍 Available files: "
+    select csv_path in TimeTable_*.csv; do
+        if [[ -n "$csv_path" ]]; then
+            break
+        else
+            echo "🚫 Wrong choice, try again."
+        fi
+    done
+fi
+
+available_groups=$(iconv -f windows-1251 -t utf-8 "$csv_path" | \
+    sed -e 's/\r\n/\n/g' -e 's/\r/\n/g' | sed 's/^\xEF\xBB\xBF//' | \
+    sed 's/"//g' | awk -F',' 'NR > 1 { split($1, x, " - "); print x[1] }' | sort -u)
+
+if [[ -z "$available_groups" ]]; then
+    echo "❌ No academic groups found in the file."
+    exit 1
+fi
+
+if [[ -z "$group_input" ]]; then
+    PS3="👤 Select group:"
+    select selected_group in $available_groups; do
+        if [[ -n "$selected_group" ]]; then
+            break
+        else
+            echo "🚫 Wrong choice, try again."
+        fi
+    done
+else
+    selected_group="$group_input"
+fi
+
+result_file="Google_${csv_path}"
+echo "\"Subject\",\"Start Date\",\"Start Time\",\"End Date\",\"End Time\",\"Description\"" > "$result_file"
+
+iconv -f windows-1251 -t utf-8 "$csv_path" | \
+    sed -e 's/\r\n/\n/g' -e 's/\r/\n/g' -e 's/^\xEF\xBB\xBF//' | \
+    awk -v grp="$selected_group" '
+    BEGIN {
+        FS="\",\""; OFS="|"
+    }
+
+    function generate_key(date, time, d, m, y, h, min) {
+        split(date, dp, ".")
+        split(time, tp, ":")
+        return sprintf("%04d%02d%02d%02d%02d", dp[3], dp[2], dp[1], tp[1], tp[2])
+    }
+
+    NR > 1 {
+        gsub(/^"/, "", $1)
+        gsub(/"$/, "", $(NF))
+        split($1, parts, " - ")
+        g_name = parts[1]
+        l_type = parts[2]
+
+        if (g_name == grp) {
+            sort_key = generate_key($2, $3)
+            print sort_key, l_type, $2, $3, $4, $5, $12
+        }
+    }' | sort -t'|' -k1,1 | \
+    awk -F'|' '
+    BEGIN { OFS="," }
+
+    function fmt_time(t, h, m, res) {
+        split(t, tt, ":"); h = tt[1]; m = tt[2]
+        res = (h >= 12) ? "PM" : "AM"
+        if (h == 0) h = 12; else if (h > 12) h -= 12
+        return sprintf("%02d:%02d %s", h, m, res)
+    }
+
+    function fmt_date(date_str, parts) {
+        split(date_str, parts, ".")
+        return sprintf("%02d/%02d/%04d", parts[2], parts[1], parts[3])
+    }
+
+    {
+        type = $2
+        raw_date = $3
+        split(raw_date, dt, ".")
+        identifier = sprintf("%04d%02d%02d", dt[3], dt[2], dt[1])
+        composite_key = type "-" identifier
+
+        if (!(composite_key in seen)) {
+            counter[type]++
+            seen[composite_key] = counter[type]
+        }
+
+        entry_num = seen[composite_key]
+        print "\"" type "; №" entry_num "\"", \
+              "\"" fmt_date($3) "\"", \
+              "\"" fmt_time($4) "\"", \
+              "\"" fmt_date($5) "\"", \
+              "\"" fmt_time($6) "\"", \
+              "\"" $7 "\""
+    }' >> "$result_file"
+
+if ! $quiet; then
+    echo "✅ Saved to: $result_file"
+fi
